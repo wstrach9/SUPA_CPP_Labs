@@ -1,9 +1,9 @@
 # SUPA_Cpp
-Lab exercises and development environment for Glasgow SUPA C++ course, winter 2023
+Lab exercises and development environment for Glasgow SUPA C++ course, winter 2024
 
 ## Getting started
 
-Welcome to 2023 SUPA C++ course. This year we are providing a ready-made development environment using [github codespaces](https://github.com/features/codespaces) that should hopefully make things run more smoothly and reduce the number of prerequisites needed to get started.
+Welcome to 2024 SUPA C++ course. This year we are providing a ready-made development environment using [github codespaces](https://github.com/features/codespaces) that should hopefully make things run more smoothly and reduce the number of prerequisites needed to get started.
 
 ## Prerequisites:
 
@@ -28,9 +28,16 @@ Once built you should be able to stop and start the codespace almost instantly, 
 If you have never seen it before the layout of VScode can seem a bit daunting but it is ultimately very functional. The main components of the interface are highlighted below:
 ![](./assets/VScodeLayout_annotated.png)
 
-The most important parts for the lab are the main editor window (where you will write your code), the terminal (where you will compile and run it, and the source control (git) tab on the left.
+The most important parts for the lab are the file browser tab (where you can see your file structure), the main editor window (where you will write your code), the terminal (where you will compile and run it), and the source control (git) tab on the left.
 
-This keeps track of any changes you make and is what you will use to submit your final code. In the image above the blue 2 indicates that there are two files that have changed recently. 
+One slightly unintuitive aspect is that the file browser and terminal are not linked. If you are viewing/opening nested files in the browser, your location in the terminal does not change to match. To run or compile a file somewhere other than the home directory you will need to change directory manually in the terminal using the `cd` command, e.g:
+
+```bash
+cd Exercises2024/Ex1_2/
+g++ -std=c++20 -w myScript.cxx -o myScript
+```
+
+The source control tab is used to keep track of any changes you make and is what you will use to submit your final code. In the image above the blue 2 indicates that there are two files that have changed recently. 
 
 When you have code you want to submit open this tab, choose all of the files you would like to add, optionally write a commit message at the top. 
 
