@@ -57,15 +57,21 @@ int main(){
 	int RevCrysBall_optimisecycles;
 
 	//global plotting variables
+	int nbins = 30; //number of bins for mysterydata histogram
+	double mysterymean = std::accumulate(mysterydata.begin(), mysterydata.end(), 0.0)/mysterydata.size();
+	std::vector<double>::iterator mysterymin = std::min_element(mysterydata.begin(), mysterydata.end());
+	std::vector<double>::iterator mysterymax = std::max_element(mysterydata.begin(), mysterydata.end());
+	std::cout<< "smallest in " << file << ": " << *mysterymin << std::endl;
+	std::cout<< "largest in " << file << ": " << *mysterymax << std::endl << std::endl;
 	std::pair<double,double> GlobalRange = RangeMinMax(askforrange);
-	int Nbins = 30; //number of bins for mysterydata histogram
-	double mysterymean = std::accumulate(mysterydata.begin(), mysterydata.end(), 0u)/mysterydata.size();
 	
 	//Plot invxsquared
-	FiniteFunction invxsquared;
-	invxsquared.setRangeMin(GlobalRange.first);
-	invxsquared.setRangeMax(GlobalRange.second);
-	invxsquared.plotData(mysterydata, Nbins);
+	
+	FiniteFunction BasicFunc;
+	BasicFunc.setRangeMin(GlobalRange.first);
+	BasicFunc.setRangeMax(GlobalRange.second);
+	BasicFunc.setOutfile("test"); //extensions added later
+	BasicFunc.plotData(mysterydata, nbins, false);
 	/*
 	//Plot Normal
 	if (calcNormal){
@@ -162,7 +168,6 @@ int main(){
 	}
 	*/
 	
-	
 	//plot Reverse-Crystal-Ball
 	if (calcRevCrysBall){
 		RevCrysBall Final_RevCrysBall(GlobalRange.first, GlobalRange.second, RevCrysBallout);
@@ -181,13 +186,22 @@ int main(){
 			}
 			bool askforguesses = true;
 			std::vector<std::string> paramnames = {"mu", "sigma", "n", "alpha"};
-			std::vector<std::pair<double,double>> guessrange = getguesses(askforguesses, 4, paramnames, mysterymean);
+			std::vector<std::pair<double,double>> guessrange = getguesses(askforguesses, paramnames, mysterymean);
+			for (std::pair<double,double> entry: guessrange){
+				std::cout << entry.first << " ,  " << entry.second << std::endl;
+			}
 			std::vector<std::vector<std::pair<double,double>>> optimisationhistory;
-			optimisationhistory = TourDeSequence(paramnames, guessrange, 30, mysterydata, RevCrysBall_optimisecycles,true);
+			std::cout << "here1" << std::endl;
+			optimisationhistory = TourDeSequence(paramnames, 30, GlobalRange, RevCrysBallout, guessrange, 5, mysterydata, RevCrysBall_optimisecycles,true);
+			std::cout << "here2" << std::endl;
 			Final_RevCrysBall.setmu(optimisationhistory[-1][0].first);
+			std::cout << "here3" << std::endl;
 			Final_RevCrysBall.setsigma(optimisationhistory[-1][1].first);
+			std::cout << "here4" << std::endl;
 			Final_RevCrysBall.setn(optimisationhistory[-1][2].first);
+			std::cout << "here5" << std::endl;
 			Final_RevCrysBall.setalpha(optimisationhistory[-1][3].first);
+			std::cout << "here6" << std::endl;
 		}
 		
 		/*
@@ -199,7 +213,7 @@ int main(){
 		}
 		*/
 		if (plotRevCrysBall){
-			Final_RevCrysBall.plotData(mysterydata, Nbins, true);
+			Final_RevCrysBall.plotData(mysterydata, nbins, true);
 			Final_RevCrysBall.plotFunction();
 			Final_RevCrysBall.printInfo();
 			Final_RevCrysBall.~RevCrysBall();

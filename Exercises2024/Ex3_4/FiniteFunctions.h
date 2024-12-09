@@ -8,14 +8,14 @@ std::vector<double> readmysterydata(std::string);
 int intcin(std::string prompt);
 bool yncin(std::string prompt);
 double doublecin(std::string prompt);
-std::vector<std::pair<double, double>> getguesses(bool askforguesses, int n_params, std::vector<std::string> paramnames, double mysterymean);
+std::vector<std::pair<double, double>> getguesses(bool askforguesses, std::vector<std::string> paramnames, double mysterymean);
 std::pair<int, double> findmin(std::vector<double>);
 std::vector<double> parametersweep(std::string, bool, double&, double&, int&);
 std::pair<double,double> RangeMinMax(bool, double rmin = -5, double rmax = 5);
 //Functions to optimise fit for Reverse Crystal Ball
 void checkzerox(double& guess, double range, std::string paramname);
 void changeguess(double& guess, double& range, double best, std::string paramname);
-std::vector<std::vector<std::pair<double,double>>> TourDeSequence(std::vector<std::string>, std::vector<std::pair<double, double>>&, int, std::vector<double>, int, bool);
+std::vector<std::vector<std::pair<double,double>>> TourDeSequence(std::vector<std::string>, int, std::pair<double,double>, std::string, std::vector<std::pair<double, double>>&, int, std::vector<double>, int, bool);
 std::vector<std::pair<double,double>> cycleoptimise(int, std::string, std::pair<double,double>, std::vector<std::pair<double, double>>&, std::vector<std::string> , int, std::vector<double>);
 std::pair<double,double> singleoptimise(int, std::pair<double,double> GlobalRange, std::string, std::vector<std::vector<double>>, std::vector<double>, int);
 int fourcycle(int&, bool&);

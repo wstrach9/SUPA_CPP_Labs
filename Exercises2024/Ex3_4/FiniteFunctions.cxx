@@ -118,6 +118,7 @@ std::vector<std::pair<double,double>> getguesses(bool askforguesses, std::vector
 		}
 		output.push_back(std::make_pair(tempguess,temprange));
 	}
+	return output;
 }
 
 void changeguess(double& guess, double& range, double best, std::string paramname){
@@ -257,8 +258,11 @@ int fourcycle(int &place, bool &cyclecomplete){
 	//outputs useable paramindex
 	cyclecomplete = false;
 	std::vector<int> sequence = {0,1,2,3,0,3,2,1,3,1,0,2};
-	int turn = sequence[place];
-	if (place > 10){
+	int turn;
+	if ((place > -1 && place < 12)){
+		turn = sequence[place];
+	}
+	if ((place > -1 && place < 11)){
 		place++;
 	}
 	else{
@@ -334,7 +338,7 @@ std::vector<double> parametersweep(bool askforparams, std::string paramname, dou
 // </Reverse Crystal Ball optimisations functions>
 
 std::pair<double,double> RangeMinMax(bool askforrange, double rmin, double rmax){
-	if (askforrange == true){
+	if (askforrange){
 		std::cout << "Enter global Lower bound for fitting and plotting. (double)" << std::endl;
 		std::cin >> rmin;
 		while (!std::cin){ // bool flag if input i'n't int or double trouble
@@ -343,14 +347,16 @@ std::pair<double,double> RangeMinMax(bool askforrange, double rmin, double rmax)
 			std::cout << "Not numeric. Enter global Lower bound for fitting and plotting. (double)" << std::endl;
 			std::cin >> rmin;
 		}
+		//std::cout << "Lower bound is: "<<rmin<<std::endl;
 		std::cout << "Enter global Upper bound for fitting and plotting. (double)" << std::endl;
 		std::cin >> rmax;
 		while (!std::cin){ // bool flag if input i'n't int or double trouble
 			std::cin.clear(); //clear flag
 			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); //clear cin input
-			std::cout << "Not numeric. Enter global Lower bound for fitting and plotting. (double)" << std::endl;
+			std::cout << "Not numeric. Enter global Upper bound for fitting and plotting. (double)" << std::endl;
 			std::cin >> rmax;
 		}
+		//std::cout << "Upper bound is: "<< rmax << std::endl;
 	}
 	return std::make_pair(rmin, rmax);
 }
@@ -684,7 +690,7 @@ std::vector< std::pair<double,double> > FiniteFunction::makeHist(std::vector<dou
   for (double point : points){
     //Get bin index (starting from 0) the point falls into using point value, range, and Nbins
     int bindex = static_cast<int>(floor((point-m_RMin)/((m_RMax-m_RMin)/(double)Nbins)));
-    if (bindex<0 || bindex>Nbins){
+    if (bindex<0 || bindex>=Nbins){
       continue;
     }
     bins[bindex]++; //weight of 1 for each data point
