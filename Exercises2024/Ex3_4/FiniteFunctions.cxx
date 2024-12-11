@@ -6,6 +6,7 @@
 #include "FiniteFunctions.h"
 #include <filesystem> //To check extensions in a nice way
 #include <numbers>
+#include <random>
 
 #include "gnuplot-iostream.h" //Needed to produce plots (not part of the course) 
 
@@ -146,16 +147,72 @@ bool FiniteFunction::readfithistory(std::vector<double>& bestfit, std::string my
 	return false;
 }
 
-double FiniteFunction::calcChi2(std::vector<double> mysterydata, int Nbins){
-	m_data = makeHist(mysterydata, Nbins);
+double FiniteFunction::calcChi2(bool isdata){
+	std::vector<std::pair<double,double>> hist_data;
+	if (isdata){
+		hist_data = m_data;
+	}
+	else{
+		hist_data = m_samples;
+	}
 	double cumulative = 0;
-	for (size_t i = 0; i < mysterydata.size(); i++){
-		cumulative += (m_data[i].second - this->callFunction(m_data[i].first))*(m_data[i].second - this->callFunction(m_data[i].first))/this->callFunction(m_data[i].first);
+	for (size_t i = 0; i < hist_data.size(); i++){
+		cumulative += (hist_data[i].second - this->callFunction(hist_data[i].first))*(hist_data[i].second - this->callFunction(hist_data[i].first))/this->callFunction(hist_data[i].first);
 	}
 	return cumulative;
 }
 
-void FiniteFunction::printtofithist(std::vector<double> mysterydata, int Nbins, std::string datafile, std::string path){
+
+
+
+
+std::vector<double> FiniteFunction::metropolis(int Npoints, double stddev){
+	std::vector<double> generatedsample;
+	double x_i;
+	double random_y;
+	std::vector<double> to_test;
+	double A;
+	double T;
+	std::random_device rd;
+	std::mt19937 mtEngine{rd()};
+	std::uniform_real_distribution<double> uniform_PDF{0, 1};
+	x_i = uniform_PDF(mtEngine);
+	x_i = x_i*(m_RMax-m_RMin) + m_RMin;
+	generatedsample.push_back(x_i);
+	std::normal_distribution<double> Normal_y_PDF{x_i, stddev};
+	while (generatedsample.size() < Npoints){
+		x_i = generatedsample.back();
+		random_y = Normal_y_PDF(mtEngine);
+		to_test = {this->callFunction(random_y)/this->callFunction(x_i) ,1};
+		A = findmin(to_test);
+		T = uniform_PDF(mtEngine);
+		if (T < A && random_y <= m_RMax && random_y >= m_RMin){
+			generatedsample.push_back(random_y);
+		}
+		else{
+			generatedsample.push_back(x_i);
+		}
+	}
+	return generatedsample;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+void FiniteFunction::printtofithist(bool isdata, std::string datafile, bool loud, std::string histpath){
 	std::string mysterynumbers;
 	int check;
 	for (size_t i = 0; i < datafile.size(); i++){
@@ -164,30 +221,43 @@ void FiniteFunction::printtofithist(std::vector<double> mysterydata, int Nbins, 
 			mysterynumbers += datafile[i];
 		}
 	}
-	std::string historyfile = path + m_historyfile + "_fithistory_" + mysterynumbers + ".txt";
-	std::filesystem::create_directory(path); 		//
-	std::filesystem::create_directory(historyfile); //create history file if not exists
+	std::string historyfile = histpath + m_historyfile + "_fithistory_" + mysterynumbers + ".txt";
+	std::filesystem::create_directory(histpath); 		//create directory (returns false if already exists)
 	std::ofstream historyfilestream;
+	if (!(std::filesystem::exists(historyfile))){
+		std::ofstream tempfstream;
+		tempfstream.open(historyfile);
+		tempfstream.close();
+	}
 	historyfilestream.open(historyfile, std::ios::app);
 	if (!historyfilestream.is_open()){	//check opened correctly
 		std::cout << "Error: failed to open history file: " << m_historyfile + "_fithistory_" + mysterynumbers + ".txt" << std::endl;
 	}
-	else{
+	else if (loud){
 		std::cout << "History file: " << m_historyfile + "_fithistory_" + mysterynumbers + ".txt" << " open." <<std::endl;
 	}
 	//datawriting here
-	double Chi2 = this->calcChi2(mysterydata, Nbins);	//calculate chi squared
+	double Chi2 = this->calcChi2(isdata);	//calculate chi squared
 	std::string line = std::to_string(Chi2);	
 	for (size_t i = 0; i < m_paramnames.size(); i++){
-		line += (std::to_string(m_params[i]) + ',');
+		line += (',' + std::to_string(m_params[i]));
 	}
-	line.pop_back(); //remove extra , on end
 	historyfilestream << line << std::endl;
 	historyfilestream.close();
-	std::cout << m_historyfile + "_fithistory_" + mysterynumbers + ".txt" << " closed." << std::endl;
+	if (loud){
+		std::cout << m_historyfile + "_fithistory_" + mysterynumbers + ".txt" << " closed." << std::endl;
+	}
 }
 
-void FiniteFunction::setRangeMinMax(std::vector<double> mysterydata, bool askforrange, bool loud){
+void FiniteFunction::setRangeMinMax(std::vector<double> mysterydata, bool& askedforrange, std::pair<double,double>& GlobalRange, bool askforrange, bool loud){
+	if (askedforrange == true){
+		m_RMin = GlobalRange.first;
+		m_RMax = GlobalRange.second;
+		if (loud){
+			std::cout << "Plotting between " << m_RMin << " and " << m_RMax << std::endl;
+		}
+	}
+	else{
 	double minimum = findmin(mysterydata);
 	double maximum = findmax(mysterydata);
 	double rmin;
@@ -216,12 +286,15 @@ void FiniteFunction::setRangeMinMax(std::vector<double> mysterydata, bool askfor
 	}
 	m_RMin = rmin;
 	m_RMax = rmax;
+	askedforrange = true;
+	GlobalRange = std::make_pair(rmin,rmax);
+	}
 }
 	
 void FiniteFunction::selectparams(bool& askforparams, std::string mysteryfile, bool loud, std::string path){
 	std::vector<double> params;
 	if (!(askforparams)){
-		askforparams = this->readfithistory(params, mysteryfile, loud);
+		askforparams = this->readfithistory(params, mysteryfile, loud, path);
 	}
 	if (askforparams){
 		std::string prompt;
@@ -229,11 +302,11 @@ void FiniteFunction::selectparams(bool& askforparams, std::string mysteryfile, b
 		for (std::string paramname : m_paramnames){
 			prompt = "Enter a value for " + paramname + ".";
 			param = doublecin(prompt);
-			if ((paramname == "sigma" || paramname == "n" || paramname == "gamma") && !(param > 0) ){
+			if ((paramname == "sigma" || paramname == "alpha" || paramname == "gamma") && !(param > 0) ){
 				std::cout << paramname + " must be greater than 0. Setting to 1..." << std::endl;
 				param = 1;
 			}
-			else if (paramname == "alpha" && !(param > 1)){
+			else if (paramname == "n" && !(param > 1)){
 				std::cout << paramname + " must be greater than 1. Setting to 2..." << std::endl;
 				param = 2;
 			}
@@ -418,8 +491,14 @@ Integration by hand (output needed to normalise function when plotting)
 */ 
 double FiniteFunction::integrate(int Ndiv){ //private
   //ToDo write an integrator
-  return -99;  
+  double stripwidth = (m_RMax - m_RMin)/Ndiv;
+  double cumulative =0;
+  for (int i = 0; i < Ndiv; i++){
+	cumulative += stripwidth*this->callFunction(m_RMin + stripwidth*(0.5+i));
+  }
+  return cumulative;
 }
+
 double FiniteFunction::integral(int Ndiv) { //public
   if (Ndiv <= 0){
     std::cout << "Invalid number of divisions for integral, setting Ndiv to 1000" <<std::endl;

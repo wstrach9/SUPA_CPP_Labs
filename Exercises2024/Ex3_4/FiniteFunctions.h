@@ -22,9 +22,10 @@ class FiniteFunction{
 
 public:
   //added
-  void setRangeMinMax(std::vector<double>, bool askforrange = false, bool loud = false);
-  void printtofithist(std::vector<double>, int, std::string, std::string path = "");
-  double calcChi2(std::vector<double>, int);
+  void setRangeMinMax(std::vector<double>, bool&, std::pair<double,double>&, bool askforrange = false, bool loud = false);
+  void printtofithist(bool, std::string, bool loud, std::string path = "");
+  double calcChi2(bool);
+  std::vector<double> metropolis(int, double);
   //original
   FiniteFunction(); //Empty constructor
   FiniteFunction(double range_min, double range_max, std::string outfile); //Variable constructor
